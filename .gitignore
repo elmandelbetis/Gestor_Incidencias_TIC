@@ -1,0 +1,12 @@
+# Configuración local de clasp (contiene el scriptId privado)
+.clasp.json
+
+# Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dependencias o logs locales (si usas Node/clasp localmente)
+node_modules/
+*.log
