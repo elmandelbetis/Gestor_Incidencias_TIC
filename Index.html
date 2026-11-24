@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de incidencias</title>
+  <style>
+    /* Fondo y texto general de la página. */
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef5fc;
+      color: #18324b;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    /* Centra y limita el contenido principal. */
+    main { max-width: 900px; margin: 24px auto; }
+    /* Organiza el título y el acceso en la parte superior. */
+    .cabecera {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+    /* Título principal en azul. */
+    h1 { margin: 0; color: #145da0; font-size: 1.9rem; }
+    /* Títulos de los apartados. */
+    h2 { margin: 0 0 14px; color: #1d5686; font-size: 1.35rem; }
+    /* Tarjetas blancas para el acceso, el formulario y el listado. */
+    .tarjeta, form {
+      padding: 24px;
+      background: #fff;
+      border: 1px solid #d5e4f2;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px #174a7512;
+    }
+    /* Reduce el espacio de la tarjeta de acceso superior. */
+    #acceso-admin { width: min(270px, 100%); padding: 14px; }
+    /* Etiquetas de los campos. */
+    label { display: block; margin-top: 12px; color: #244866; font-weight: 600; }
+    /* Campos de texto y selectores. */
+    input, textarea, select {
+      box-sizing: border-box;
+      width: 100%;
+      margin-top: 6px;
+      padding: 11px 12px;
+      border: 1px solid #b8cde0;
+      border-radius: 7px;
+      background: #fff;
+      color: #18324b;
+      font: inherit;
+    }
+    /* Resalta el campo activo. */
+    input:focus, textarea:focus, select:focus {
+      outline: 3px solid #b9dcfa;
+      border-color: #2878b9;
+    }
+    /* Área para escribir una descripción. */
+    textarea { min-height: 120px; resize: vertical; }
+    /* Botones de la aplicación. */
+    button {
+      margin-top: 16px;
+      padding: 10px 17px;
+      border: 1px solid #145da0;
+      border-radius: 7px;
+      background: #1769aa;
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    /* Efecto al pasar el cursor por un botón. */
+    button:hover:not(:disabled) { background: #105487; }
+    /* Apariencia de controles desactivados. */
+    button:disabled, select:disabled { opacity: 0.65; cursor: wait; }
+    /* Mensaje de respuesta del formulario. */
+    #mensaje { min-height: 1.5em; margin: 14px 0 0; }
+    /* Colores para avisos. */
+    .error { color: #a52626; }
+    .exito { color: #187443; }
+    /* Permite desplazar la tabla en móviles. */
+    .tabla-contenedor { overflow-x: auto; border: 1px solid #d5e4f2; border-radius: 8px; }
+    /* Estructura de la tabla. */
+    table { width: 100%; min-width: 620px; border-collapse: collapse; background: #fff; }
+    /* Celdas y encabezados de la tabla. */
+    th, td { padding: 11px 12px; border-bottom: 1px solid #dce7f1; text-align: left; vertical-align: top; }
+    /* Encabezado azul claro de la tabla. */
+    th { background: #e8f2fb; color: #214e73; font-size: 0.95rem; }
+    /* Selector de estado dentro de la tabla. */
+    td select { min-width: 145px; margin: 0; }
+    /* Diseño en pantallas pequeñas. */
+    @media (max-width: 650px) {
+      body { padding: 14px; }
+      main { margin: 8px auto; }
+      .cabecera { flex-direction: column; }
+      h1 { font-size: 1.55rem; }
+      .tarjeta, form { padding: 17px; }
+      #acceso-admin { box-sizing: border-box; width: 100%; }
+      #boton, #acceso-admin button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="cabecera">
+      <h1>Registro de incidencias informáticas</h1>
+      <form id="acceso-admin">
+        <label for="contrasena-admin">Acceso de administrador</label>
+        <input id="contrasena-admin" type="password" placeholder="Contraseña" autocomplete="current-password">
+        <button id="boton-admin" type="submit">Entrar</button>
+        <button id="boton-salir" type="button" hidden>Cerrar sesión</button>
+      </form>
+    </header>
+
+    <form id="formulario">
+      <h2>Añadir incidencia</h2>
+      <label for="equipo">Equipo</label>
+      <input id="equipo" name="equipo" type="text" required>
+
+      <label for="aula">Aula</label>
+      <input id="aula" name="aula" type="text" required>
+
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" name="descripcion" required></textarea>
+
+      <button id="boton" type="submit">Registrar</button>
+      <p id="mensaje" role="status" aria-live="polite"></p>
+    </form>
+
+    <section class="tarjeta" aria-labelledby="titulo-listado" style="margin-top: 18px;">
+      <h2 id="titulo-listado">Incidencias registradas</h2>
+      <p id="estado-listado" role="status" aria-live="polite">Cargando incidencias...</p>
+      <div class="tabla-contenedor">
+        <table id="tabla-incidencias">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Equipo</th>
+              <th>Aula</th>
+              <th>Descripción</th>
+              <th id="encabezado-estado" hidden>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="filas-incidencias"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const formulario = document.getElementById('formulario');
+    const boton = document.getElementById('boton');
+    const mensaje = document.getElementById('mensaje');
+    const filasIncidencias = document.getElementById('filas-incidencias');
+    const estadoListado = document.getElementById('estado-listado');
+    const tablaIncidencias = document.getElementById('tabla-incidencias');
+    const encabezadoEstado = document.getElementById('encabezado-estado');
+    const formularioAdmin = document.getElementById('acceso-admin');
+    const campoContrasena = document.getElementById('contrasena-admin');
+    const botonAdmin = document.getElementById('boton-admin');
+    const botonSalir = document.getElementById('boton-salir');
+    const estadosPermitidos = ['Pendiente', 'En reparación', 'Resuelta'];
+    let tokenAdmin = '';
+
+    // Inicia una sesión de administrador si la contraseña es correcta.
+    formularioAdmin.addEventListener('submit', function (evento) {
+      evento.preventDefault();
+      botonAdmin.disabled = true;
+      google.script.run
+        .withSuccessHandler(function (token) {
+          tokenAdmin = token;
+          campoContrasena.value = '';
+          campoContrasena.hidden = true;
+          botonAdmin.hidden = true;
+          botonSalir.hidden = false;
+          campoContrasena.parentElement.querySelector('label').textContent = 'Sesión de administrador activa';
+          mostrarMensaje('Has entrado como administrador.', 'exito');
+          cargarIncidencias();
+          botonAdmin.disabled = false;
+        })
+        .withFailureHandler(function (error) {
+          mostrarMensaje('No se pudo iniciar sesión: ' + error.message, 'error');
+          botonAdmin.disabled = false;
+        })
+        .iniciarSesionAdmin(campoContrasena.value);
+    });
+
+    // Cierra la sesión y oculta de nuevo las funciones administrativas.
+    botonSalir.addEventListener('click', function () {
+      const token = tokenAdmin;
+      tokenAdmin = '';
+      campoContrasena.hidden = false;
+      botonAdmin.hidden = false;
+      botonSalir.hidden = true;
+      campoContrasena.parentElement.querySelector('label').textContent = 'Acceso de administrador';
+      google.script.run.cerrarSesionAdmin(token);
+      mostrarMensaje('Has cerrado la sesión de administrador.', '');
+      cargarIncidencias();
+    });
+
+    // Comprueba los campos y envía una incidencia nueva al servidor.
+    formulario.addEventListener('submit', function (evento) {
+      evento.preventDefault();
+      const datos = {
+        equipo: formulario.equipo.value.trim(),
+        aula: formulario.aula.value.trim(),
+        descripcion: formulario.descripcion.value.trim()
+      };
+
+      if (!datos.equipo || !datos.aula || !datos.descripcion) {
+        mostrarMensaje('Completa los tres campos.', 'error');
+        return;
+      }
+
+      boton.disabled = true;
+      mostrarMensaje('Guardando incidencia...', '');
+      google.script.run
+        .withSuccessHandler(function (respuesta) {
+          mostrarMensaje(respuesta.mensaje + ' ID: ' + respuesta.id, 'exito');
+          formulario.reset();
+          boton.disabled = false;
+          cargarIncidencias();
+        })
+        .withFailureHandler(function (error) {
+          mostrarMensaje('No se pudo guardar: ' + error.message, 'error');
+          boton.disabled = false;
+        })
+        .registrarIncidencia(datos);
+    });
+
+    // Pide al servidor las incidencias que puede ver el usuario actual.
+    function cargarIncidencias() {
+      estadoListado.textContent = 'Cargando incidencias...';
+      tablaIncidencias.hidden = true;
+      encabezadoEstado.hidden = !tokenAdmin;
+      google.script.run
+        .withSuccessHandler(mostrarIncidencias)
+        .withFailureHandler(function (error) {
+          filasIncidencias.replaceChildren();
+          estadoListado.textContent = 'No se pudieron cargar las incidencias: ' + error.message;
+        })
+        .obtenerIncidencias(tokenAdmin || '');
+    }
+
+    // Muestra los datos y añade controles de estado solo al administrador.
+    function mostrarIncidencias(incidencias) {
+      filasIncidencias.replaceChildren();
+      if (incidencias.length === 0) {
+        tablaIncidencias.hidden = true;
+        estadoListado.textContent = 'Todavía no hay incidencias registradas.';
+        return;
+      }
+
+      incidencias.forEach(function (incidencia) {
+        const fila = document.createElement('tr');
+        [incidencia.fecha, incidencia.equipo, incidencia.aula,
+          incidencia.descripcion].forEach(function (valor) {
+          const celda = document.createElement('td');
+          celda.textContent = valor;
+          fila.appendChild(celda);
+        });
+
+        if (tokenAdmin) {
+          const celdaEstado = document.createElement('td');
+          const selectorEstado = document.createElement('select');
+          selectorEstado.setAttribute('aria-label', 'Estado de la incidencia');
+          estadosPermitidos.forEach(function (estado) {
+            const opcion = document.createElement('option');
+            opcion.textContent = estado;
+            opcion.value = estado;
+            selectorEstado.appendChild(opcion);
+          });
+          selectorEstado.value = incidencia.estado;
+          selectorEstado.addEventListener('change', function () {
+            guardarEstado(incidencia.id, selectorEstado);
+          });
+          celdaEstado.appendChild(selectorEstado);
+          fila.appendChild(celdaEstado);
+        }
+        filasIncidencias.appendChild(fila);
+      });
+
+      estadoListado.textContent = '';
+      tablaIncidencias.hidden = false;
+    }
+
+    // Guarda un estado como administrador y vuelve a consultar la tabla.
+    function guardarEstado(id, selector) {
+      const nuevoEstado = selector.value;
+      selector.disabled = true;
+      mostrarMensaje('Actualizando estado...', '');
+      google.script.run
+        .withSuccessHandler(function (respuesta) {
+          mostrarMensaje(respuesta, 'exito');
+          cargarIncidencias();
+        })
+        .withFailureHandler(function (error) {
+          mostrarMensaje('No se pudo actualizar el estado: ' + error.message, 'error');
+          cargarIncidencias();
+        })
+        .actualizarEstadoIncidencia(id, nuevoEstado, tokenAdmin);
+    }
+
+    // Actualiza el mensaje y su estilo.
+    function mostrarMensaje(texto, tipo) {
+      mensaje.textContent = texto;
+      mensaje.className = tipo;
+    }
+
+    cargarIncidencias();
+  </script>
+</body>
+</html>
